@@ -1,6 +1,9 @@
 locals {
   services = [
     "sqladmin.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "serviceusage.googleapis.com",
+    "storage.googleapis.com",
   ]
 }
 

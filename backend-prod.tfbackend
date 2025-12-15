@@ -1,0 +1,2 @@
+bucket = "global-reach-media-prod-tfstate"
+prefix = "terraform/state"

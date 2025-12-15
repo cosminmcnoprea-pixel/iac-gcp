@@ -48,7 +48,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform init
+        run: terraform init -backend-config="backend-${{ env.ENVIRONMENT }}.tfbackend"
 
       - name: Terraform Validate
         working-directory: ${{ env.WORKING_DIR }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform init
+        run: terraform init -backend-config="backend-${{ env.ENVIRONMENT }}.tfbackend"
 
       - name: Download Plan
         uses: actions/download-artifact@v4
