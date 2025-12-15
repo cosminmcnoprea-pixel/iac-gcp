@@ -5,7 +5,9 @@ locals {
     "serviceusage.googleapis.com",
     "storage.googleapis.com",
     "cloudresourcemanager.googleapis.com",
-    "servicenetworking.googleapis.com"
+    "servicenetworking.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "run.googleapis.com",
   ]
 }
 
