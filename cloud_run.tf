@@ -33,6 +33,11 @@ resource "google_cloud_run_v2_service" "php_app" {
         name  = "DB_USER"
         value = var.user_name
       }
+
+      env {
+        name  = "STATIC_BUCKET_URL"
+        value = "https://storage.googleapis.com/${var.static_bucket_name}-${var.environment}"
+      }
     }
 
     scaling {

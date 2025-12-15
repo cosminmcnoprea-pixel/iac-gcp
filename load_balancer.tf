@@ -21,19 +21,14 @@ resource "google_compute_backend_service" "cloud_run_backend" {
   project = var.project_id
   name    = "php-app-backend"
 
-  protocol                        = "HTTP"
-  port_name                       = "http"
-  timeout_sec                     = 30
-  load_balancing_scheme           = "EXTERNAL_MANAGED"
-  connection_draining_timeout_sec = 300
+  protocol    = "HTTP"
+  port_name   = "http"
+  timeout_sec = 30
 
   backend {
     group = google_compute_region_network_endpoint_group.cloud_run_neg.id
   }
 
-  log_config {
-    enable = true
-  }
 }
 
 resource "google_compute_url_map" "url_map" {
@@ -59,12 +54,11 @@ resource "google_compute_target_https_proxy" "https_proxy" {
 }
 
 resource "google_compute_global_forwarding_rule" "https_forwarding_rule" {
-  project               = var.project_id
-  name                  = "php-app-https-forwarding-rule"
-  target                = google_compute_target_https_proxy.https_proxy.id
-  port_range            = "443"
-  ip_address            = google_compute_global_address.lb_ip.address
-  load_balancing_scheme = "EXTERNAL_MANAGED"
+  project    = var.project_id
+  name       = "php-app-https-forwarding-rule"
+  target     = google_compute_target_https_proxy.https_proxy.id
+  port_range = "443"
+  ip_address = google_compute_global_address.lb_ip.address
 }
 
 resource "google_compute_target_http_proxy" "http_proxy" {
@@ -74,10 +68,9 @@ resource "google_compute_target_http_proxy" "http_proxy" {
 }
 
 resource "google_compute_global_forwarding_rule" "http_forwarding_rule" {
-  project               = var.project_id
-  name                  = "php-app-http-forwarding-rule"
-  target                = google_compute_target_http_proxy.http_proxy.id
-  port_range            = "80"
-  ip_address            = google_compute_global_address.lb_ip.address
-  load_balancing_scheme = "EXTERNAL_MANAGED"
+  project    = var.project_id
+  name       = "php-app-http-forwarding-rule"
+  target     = google_compute_target_http_proxy.http_proxy.id
+  port_range = "80"
+  ip_address = google_compute_global_address.lb_ip.address
 }
