@@ -19,6 +19,7 @@ env:
   TF_VERSION: '1.6.0'
   WORKING_DIR: '.'
   ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+  TF_VAR_user_password: ${{ secrets.USER_PASSWORD }}
 
 jobs:
   terraform-plan:
