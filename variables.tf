@@ -48,3 +48,9 @@ variable "environment" {
   description = "Environment name"
   type        = string
 }
+
+variable "domain" {
+  description = "Domain name for the SSL certificate"
+  type        = string
+  default     = ""
+}

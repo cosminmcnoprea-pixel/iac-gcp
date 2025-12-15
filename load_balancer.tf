@@ -1,8 +1,3 @@
-variable "domain" {
-  description = "Domain name for the SSL certificate"
-  type        = string
-  default     = ""
-}
 
 resource "google_compute_global_address" "lb_ip" {
   project = var.project_id
@@ -77,14 +72,4 @@ resource "google_compute_global_forwarding_rule" "http_forwarding_rule" {
   target     = google_compute_target_http_proxy.http_proxy.id
   port_range = "80"
   ip_address = google_compute_global_address.lb_ip.address
-}
-
-output "load_balancer_ip" {
-  value       = google_compute_global_address.lb_ip.address
-  description = "The IP address of the load balancer"
-}
-
-output "load_balancer_fqdn" {
-  value       = var.domain != "" ? var.domain : "${google_compute_global_address.lb_ip.address}.nip.io"
-  description = "The FQDN to access the application"
 }
