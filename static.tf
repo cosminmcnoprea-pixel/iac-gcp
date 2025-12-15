@@ -12,6 +12,8 @@ resource "google_storage_bucket" "static_bucket" {
     response_header = ["Content-Type"]
     max_age_seconds = 3600
   }
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_storage_bucket_iam_member" "public_read" {

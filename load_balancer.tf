@@ -15,6 +15,8 @@ resource "google_compute_region_network_endpoint_group" "cloud_run_neg" {
   cloud_run {
     service = google_cloud_run_v2_service.php_app.name
   }
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_backend_service" "cloud_run_backend" {
@@ -29,12 +31,15 @@ resource "google_compute_backend_service" "cloud_run_backend" {
     group = google_compute_region_network_endpoint_group.cloud_run_neg.id
   }
 
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_url_map" "url_map" {
   project         = var.project_id
   name            = "php-app-url-map"
   default_service = google_compute_backend_service.cloud_run_backend.id
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_managed_ssl_certificate" "ssl_cert" {
@@ -44,6 +49,8 @@ resource "google_compute_managed_ssl_certificate" "ssl_cert" {
   managed {
     domains = [var.domain != "" ? var.domain : "${google_compute_global_address.lb_ip.address}.nip.io"]
   }
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_target_https_proxy" "https_proxy" {
@@ -51,6 +58,8 @@ resource "google_compute_target_https_proxy" "https_proxy" {
   name             = "php-app-https-proxy"
   url_map          = google_compute_url_map.url_map.id
   ssl_certificates = [google_compute_managed_ssl_certificate.ssl_cert.id]
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_global_forwarding_rule" "https_forwarding_rule" {
@@ -59,12 +68,16 @@ resource "google_compute_global_forwarding_rule" "https_forwarding_rule" {
   target     = google_compute_target_https_proxy.https_proxy.id
   port_range = "443"
   ip_address = google_compute_global_address.lb_ip.address
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_target_http_proxy" "http_proxy" {
   project = var.project_id
   name    = "php-app-http-proxy"
   url_map = google_compute_url_map.url_map.id
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_compute_global_forwarding_rule" "http_forwarding_rule" {
@@ -73,4 +86,6 @@ resource "google_compute_global_forwarding_rule" "http_forwarding_rule" {
   target     = google_compute_target_http_proxy.http_proxy.id
   port_range = "80"
   ip_address = google_compute_global_address.lb_ip.address
+
+  depends_on = [google_project_service.services]
 }

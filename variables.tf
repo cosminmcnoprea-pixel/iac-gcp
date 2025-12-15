@@ -54,3 +54,8 @@ variable "domain" {
   type        = string
   default     = ""
 }
+
+variable "github_service_account" {
+  description = "Service account email used by GitHub Actions"
+  type        = string
+}
