@@ -1,0 +1,6 @@
+project_id       = "global-reach-media-dev"
+region           = "europe-west3"
+db_instance_name = "php-app-mysql"
+db_name          = "app_db"
+db_user          = "app_user"
+db_password      = "changeme"
