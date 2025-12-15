@@ -1,9 +1,6 @@
-name: Terraform Plan
+name: Terraform Apply
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -18,18 +15,16 @@ on:
 env:
   TF_VERSION: '1.6.0'
   WORKING_DIR: '.'
-  ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+  ENVIRONMENT: ${{ inputs.environment }}
   TF_VAR_user_password: ${{ secrets.USER_PASSWORD }}
 
 jobs:
-  terraform-plan:
-    name: Terraform Plan
+  terraform-apply:
+    name: Terraform Apply
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
-    outputs:
-      plan-exit-code: ${{ steps.plan.outputs.exitcode }}
     
     steps:
       - name: Checkout
@@ -50,23 +45,6 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
 
-      - name: Terraform Validate
+      - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform validate
-
-      - name: Terraform Plan
-        id: plan
-        working-directory: ${{ env.WORKING_DIR }}
-        run: |
-          terraform plan -var-file="${{ env.ENVIRONMENT }}.tfvars" -out=tfplan
-        continue-on-error: true
-
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: ${{ env.WORKING_DIR }}/tfplan
-
-      - name: Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
+        run: terraform apply -var-file="${{ env.ENVIRONMENT }}.tfvars" -auto-approve
