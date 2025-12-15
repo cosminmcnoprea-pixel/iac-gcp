@@ -38,3 +38,13 @@ variable "user_password" {
   type        = string
   sensitive   = true
 }
+
+variable "static_bucket_name" {
+  description = "Name of the GCS bucket"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}

@@ -4,7 +4,8 @@ locals {
     "iamcredentials.googleapis.com",
     "serviceusage.googleapis.com",
     "storage.googleapis.com",
-    "cloudresourcemanager.googleapis.com"
+    "cloudresourcemanager.googleapis.com",
+    "servicenetworking.googleapis.com"
   ]
 }
 
