@@ -5,9 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+    # Manual runs let you pick the target env
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: 'Where to run Terraform'
         required: true
         default: 'dev'
         type: choice
@@ -16,7 +17,9 @@ on:
           - prod
 
 env:
+  # Pin Terraform so the plan/apply behavior doesn't drift when runners update.
   TF_VERSION: '1.6.0'
+  # This workflow assumes the repo root is the Terraform root module.
   WORKING_DIR: '.'
   TF_VAR_user_password: ${{ secrets.USER_PASSWORD }}
 
@@ -35,31 +38,38 @@ jobs:
       - name: Set Environment
         id: set-env
         run: |
+          # `inputs.environment` is only set for workflow_dispatch.
+          # For pushes we default to dev so the workflow deploys to dev by default
           ENV="${{ inputs.environment || 'dev' }}"
           echo "environment=$ENV" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT=$ENV" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v4
+        # Needed for terraform init/plan to see the configuration.
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+        # Install terraform explicitly instead of relying on whatever happens to be on the runner.
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
+          # One workflow, two environments: pick the right WIF provider / service account based on the chosen environment
           workload_identity_provider: ${{ secrets[format('WIF_PROVIDER_{0}', steps.set-env.outputs.environment)] }}
           service_account: ${{ secrets[format('WIF_SERVICE_ACCOUNT_{0}', steps.set-env.outputs.environment)] }}
 
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init -backend-config="backend-${{ env.ENVIRONMENT }}.tfbackend"
+        # Backend config is per-environment (separate state buckets/prefixes).
 
       - name: Terraform Validate
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform validate
+        # Validates the configuration
 
       - name: Terraform Plan
         id: plan
@@ -67,16 +77,19 @@ jobs:
         run: |
           terraform plan -var-file="${{ env.ENVIRONMENT }}.tfvars" -out=tfplan
         continue-on-error: true
+          # Terraform plan which creates the plan file
 
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: ${{ env.WORKING_DIR }}/tfplan
+        # The apply job consumes this exact plan to avoid "plan drift" between jobs.
 
       - name: Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
+        # If plan failed, stop here.
 
   terraform-apply:
     name: Terraform Apply (${{ needs.terraform-plan.outputs.environment }})
@@ -117,7 +130,9 @@ jobs:
         with:
           name: tfplan
           path: ${{ env.WORKING_DIR }}
+        # Pull down the plan produced earlier so apply uses the same execution plan.
 
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform apply -auto-approve tfplan
+        # -auto-approve keeps CI non-interactive; environment approvals will be used to stop for approval.
