@@ -1,6 +1,6 @@
 
 module "http_lb" {
-  source                = "${local.modules_repo}//modules/http_lb_cloud_run?ref=${local.modules_ref}"
+  source                 = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//http_lb_cloud_run?ref=main"
   project_id            = var.project_id
   region                = var.region
   name                  = "php-app"

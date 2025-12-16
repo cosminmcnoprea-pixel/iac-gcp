@@ -1,5 +1,5 @@
 module "cloud_run" {
-  source       = "${local.modules_repo}//modules/cloud_run_v2_service?ref=${local.modules_ref}"
+  source       = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//cloud_run_service_v2?ref=main"
   project_id   = var.project_id
   region       = var.region
   service_name = "php-app"

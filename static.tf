@@ -1,5 +1,5 @@
 module "static_bucket" {
-  source             = "${local.modules_repo}//modules/static_bucket_public?ref=${local.modules_ref}"
+  source             = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//static_bucket?ref=main"
   project_id         = var.project_id
   region             = var.region
   static_bucket_name = var.static_bucket_name

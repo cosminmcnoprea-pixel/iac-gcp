@@ -1,5 +1,5 @@
 module "artifact_registry" {
-  source        = "${local.modules_repo}//modules/artifact_registry_docker?ref=${local.modules_ref}"
+  source        = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//artifact_registry_docker?ref=main"
   project_id    = var.project_id
   region        = var.region
   repository_id = "docker-repo"

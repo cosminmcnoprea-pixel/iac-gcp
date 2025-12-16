@@ -1,5 +1,2 @@
-locals {
-  # Source for shared Terraform modules.
-  modules_repo = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git"
-  modules_ref  = "main"
-}
+// Intentionally empty.
+// Note: Terraform does not allow variables/locals in `module.source`, so module refs are hardcoded.

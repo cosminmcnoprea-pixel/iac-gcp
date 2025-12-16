@@ -1,10 +1,11 @@
 module "project_services" {
-  source     = "${local.modules_repo}//modules/project_services?ref=${local.modules_ref}"
+  # module.source must be a literal string (no locals/vars).
+  source     = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//project_services?ref=main"
   project_id = var.project_id
 }
 
 module "cloud_sql" {
-  source           = "${local.modules_repo}//modules/cloud_sql_mysql?ref=${local.modules_ref}"
+  source           = "git::https://github.com/cosminmcnoprea-pixel/terraform-modules.git//cloud_sql_mysql?ref=main"
   project_id       = var.project_id
   region           = var.region
   instance_name    = var.instance_name
