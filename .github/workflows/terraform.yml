@@ -17,9 +17,9 @@ on:
           - prod
 
 env:
-  # Pin Terraform so the plan/apply behavior doesn't drift when runners update.
+  # Pin Terraform so plan/apply output stays predictable.
   TF_VERSION: '1.6.0'
-  # This workflow assumes the repo root is the Terraform root module.
+  # Root module is this folder (the terraform repo root).
   WORKING_DIR: '.'
   TF_VAR_user_password: ${{ secrets.USER_PASSWORD }}
 
@@ -46,45 +46,38 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-        # Needed for terraform init/plan to see the configuration.
+        # Needed so Terraform sees the configuration.
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-setup@main
         with:
-          terraform_version: ${{ env.TF_VERSION }}
-        # Install terraform explicitly instead of relying on whatever happens to be on the runner.
+          terraform-version: ${{ env.TF_VERSION }}
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/gcp-auth@main
         with:
-          # One workflow, two environments: pick the right WIF provider / service account based on the chosen environment
-          workload_identity_provider: ${{ secrets[format('WIF_PROVIDER_{0}', steps.set-env.outputs.environment)] }}
-          service_account: ${{ secrets[format('WIF_SERVICE_ACCOUNT_{0}', steps.set-env.outputs.environment)] }}
+          workload-identity-provider: ${{ secrets[format('WIF_PROVIDER_{0}', steps.set-env.outputs.environment)] }}
+          service-account: ${{ secrets[format('WIF_SERVICE_ACCOUNT_{0}', steps.set-env.outputs.environment)] }}
 
       - name: Terraform Init
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform init -backend-config="backend-${{ env.ENVIRONMENT }}.tfbackend"
-        # Backend config is per-environment (separate state buckets/prefixes).
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-init@main
+        with:
+          working-directory: ${{ env.WORKING_DIR }}
+          backend-config: backend-${{ env.ENVIRONMENT }}.tfbackend
 
       - name: Terraform Validate
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform validate
-        # Validates the configuration
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-validate@main
+        with:
+          working-directory: ${{ env.WORKING_DIR }}
 
       - name: Terraform Plan
         id: plan
-        working-directory: ${{ env.WORKING_DIR }}
-        run: |
-          terraform plan -var-file="${{ env.ENVIRONMENT }}.tfvars" -out=tfplan
-        continue-on-error: true
-          # Terraform plan which creates the plan file
-
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-plan@main
         with:
-          name: tfplan
-          path: ${{ env.WORKING_DIR }}/tfplan
-        # The apply job consumes this exact plan to avoid "plan drift" between jobs.
+          working-directory: ${{ env.WORKING_DIR }}
+          var-file: ${{ env.ENVIRONMENT }}.tfvars
+          plan-file: tfplan
+          artifact-name: tfplan
 
       - name: Plan Status
         if: steps.plan.outcome == 'failure'
@@ -111,28 +104,26 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-setup@main
         with:
-          terraform_version: ${{ env.TF_VERSION }}
+          terraform-version: ${{ env.TF_VERSION }}
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/gcp-auth@main
         with:
-          workload_identity_provider: ${{ secrets[format('WIF_PROVIDER_{0}', needs.terraform-plan.outputs.environment)] }}
-          service_account: ${{ secrets[format('WIF_SERVICE_ACCOUNT_{0}', needs.terraform-plan.outputs.environment)] }}
+          workload-identity-provider: ${{ secrets[format('WIF_PROVIDER_{0}', needs.terraform-plan.outputs.environment)] }}
+          service-account: ${{ secrets[format('WIF_SERVICE_ACCOUNT_{0}', needs.terraform-plan.outputs.environment)] }}
 
       - name: Terraform Init
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform init -backend-config="backend-${{ env.ENVIRONMENT }}.tfbackend"
-
-      - name: Download Plan
-        uses: actions/download-artifact@v4
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-init@main
         with:
-          name: tfplan
-          path: ${{ env.WORKING_DIR }}
-        # Pull down the plan produced earlier so apply uses the same execution plan.
+          working-directory: ${{ env.WORKING_DIR }}
+          backend-config: backend-${{ env.ENVIRONMENT }}.tfbackend
 
       - name: Terraform Apply
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform apply -auto-approve tfplan
-        # -auto-approve keeps CI non-interactive; environment approvals will be used to stop for approval.
+        uses: cosminmcnoprea-pixel/gh-actions/.github/actions/terraform-apply@main
+        with:
+          working-directory: ${{ env.WORKING_DIR }}
+          artifact-name: tfplan
+          plan-file: tfplan
+          auto-approve: "true"
