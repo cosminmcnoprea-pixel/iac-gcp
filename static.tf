@@ -1,27 +1,13 @@
-resource "google_storage_bucket" "static_bucket" {
-  project       = var.project_id
-  name          = "${var.static_bucket_name}-${var.environment}"
-  location      = var.region
-  force_destroy = true
+module "static_bucket" {
+  source             = "${local.modules_repo}//modules/static_bucket_public?ref=${local.modules_ref}"
+  project_id         = var.project_id
+  region             = var.region
+  static_bucket_name = var.static_bucket_name
+  environment        = var.environment
 
-  uniform_bucket_level_access = true
-
-  cors {
-    origin          = ["*"]
-    method          = ["GET", "HEAD"]
-    response_header = ["Content-Type"]
-    max_age_seconds = 3600
-  }
-
-  depends_on = [google_project_service.services]
-}
-
-resource "google_storage_bucket_iam_member" "public_read" {
-  bucket = google_storage_bucket.static_bucket.name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
+  depends_on = [module.project_services]
 }
 
 output "static_bucket_url" {
-  value = "https://storage.googleapis.com/${google_storage_bucket.static_bucket.name}"
+  value = module.static_bucket.static_bucket_url
 }

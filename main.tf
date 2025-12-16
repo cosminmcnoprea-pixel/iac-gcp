@@ -1,49 +1,18 @@
-locals {
-  services = [
-    "sqladmin.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "serviceusage.googleapis.com",
-    "storage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "servicenetworking.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "run.googleapis.com",
-    "iam.googleapis.com",
-    "compute.googleapis.com",
-  ]
+module "project_services" {
+  source     = "${local.modules_repo}//modules/project_services?ref=${local.modules_ref}"
+  project_id = var.project_id
 }
 
-resource "google_project_service" "services" {
-  for_each = toset(local.services)
-  project  = var.project_id
-  service  = each.value
-
-  disable_on_destroy = false
-}
-
-resource "google_sql_database_instance" "sql_instance" {
-  depends_on       = [google_project_service.services]
-  name             = var.instance_name
-  project          = var.project_id
+module "cloud_sql" {
+  source           = "${local.modules_repo}//modules/cloud_sql_mysql?ref=${local.modules_ref}"
+  project_id       = var.project_id
   region           = var.region
+  instance_name    = var.instance_name
   database_version = var.database_version
+  tier             = var.tier
+  database_name    = var.database_name
+  user_name        = var.user_name
+  user_password    = var.user_password
 
-  settings {
-    tier = var.tier
-  }
-
-  deletion_protection = false
-}
-
-resource "google_sql_database" "sql_database" {
-  name     = var.database_name
-  instance = google_sql_database_instance.sql_instance.name
-  project  = var.project_id
-}
-
-resource "google_sql_user" "sql_user" {
-  name     = var.user_name
-  instance = google_sql_database_instance.sql_instance.name
-  project  = var.project_id
-  password = var.user_password
+  depends_on = [module.project_services]
 }
